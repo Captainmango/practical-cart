@@ -1,15 +1,19 @@
 package cloud.eheaver.domain.utils
 
+import cats.Applicative
+import cats.Show
 import cats.effect.Temporal
-import cats.syntax.semigroup.*
-import cats.syntax.show.*
-import cats.{Applicative, Show}
+import cats.syntax.semigroup._
+import cats.syntax.show._
 import org.typelevel.log4cats.Logger
+import retry.ResultHandler
+import retry.RetryDetails
 import retry.RetryDetails.NextStep
-import retry.RetryPolicies.*
-import retry.{ResultHandler, RetryDetails, RetryPolicy, retryingOnErrors}
+import retry.RetryPolicies._
+import retry.RetryPolicy
+import retry.retryingOnErrors
 
-import scala.concurrent.duration.*
+import scala.concurrent.duration._
 
 enum Retriable {
   case Orders, Payments
@@ -35,7 +39,7 @@ trait Retry[F[_]] {
 object Retry {
   def apply[F[_]: {Retry}]: Retry[F] = summon[Retry[F]]
 
-  given [F[_]: {Logger, Temporal}]: Retry[F] with
+  given [F[_]: {Logger, Temporal}]: Retry[F] with {
     def retry[A](
         policy: RetryPolicy[F, Throwable],
         retriable: Retriable
@@ -43,7 +47,7 @@ object Retry {
         fa: F[A]
     ): F[A] = {
       // Error handler helper
-      def onError(e: Throwable, details: RetryDetails): F[Unit] =
+      def onError(e: Throwable, details: RetryDetails): F[Unit] = {
         details.nextStepIfUnsuccessful match
           case NextStep.DelayAndRetry(_) =>
             Logger[F].error(
@@ -53,10 +57,12 @@ object Retry {
             Logger[F].error(
               s"Giving up on ${retriable.show} with error ${e.toString} after ${details.retriesSoFar} retries."
             )
+      }
 
       retryingOnErrors(fa)(
         policy,
         ResultHandler.retryOnAllErrors[F, A](onError)
       )
     }
+  }
 }

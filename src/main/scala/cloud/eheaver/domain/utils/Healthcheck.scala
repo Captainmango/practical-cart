@@ -1,6 +1,7 @@
 package cloud.eheaver.domain.utils
 
-import io.circe.{Decoder, Encoder}
+import io.circe.Decoder
+import io.circe.Encoder
 import monocle.Iso
 
 enum Status {

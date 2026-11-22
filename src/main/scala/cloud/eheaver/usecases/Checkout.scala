@@ -1,39 +1,38 @@
 package cloud.eheaver.usecases
 
-import cats.syntax.all.*
 import cats.MonadThrow
 import cats.data.NonEmptyList
-import cats.implicits.{catsSyntaxApplicativeError, toFlatMapOps}
+import cats.implicits.catsSyntaxApplicativeError
+import cats.implicits.toFlatMapOps
+import cats.syntax.all._
 import cats.syntax.all.catsSyntaxMonadError
-import cloud.eheaver.domain.carts.{CartItem, EmptyCartError, ShoppingCartAlg}
-import cloud.eheaver.domain.orders.{OrderError, OrderId, OrdersAlg}
-import cloud.eheaver.domain.payments.{
-  Card,
-  Payment,
-  PaymentError,
-  PaymentId,
-  PaymentsClientAlg
-}
+import cloud.eheaver.domain.carts.CartItem
+import cloud.eheaver.domain.carts.EmptyCartError
+import cloud.eheaver.domain.carts.ShoppingCartAlg
+import cloud.eheaver.domain.orders.OrderError
+import cloud.eheaver.domain.orders.OrderId
+import cloud.eheaver.domain.orders.OrdersAlg
+import cloud.eheaver.domain.payments.Card
+import cloud.eheaver.domain.payments.Payment
+import cloud.eheaver.domain.payments.PaymentError
+import cloud.eheaver.domain.payments.PaymentId
+import cloud.eheaver.domain.payments.PaymentsClientAlg
 import cloud.eheaver.domain.users.UserId
-import cloud.eheaver.domain.utils.Retriable.{Orders, Payments}
-import cloud.eheaver.domain.utils.{Background, Retry, retryPolicy}
+import cloud.eheaver.domain.utils.Background
+import cloud.eheaver.domain.utils.Retriable.Orders
+import cloud.eheaver.domain.utils.Retriable.Payments
+import cloud.eheaver.domain.utils.Retry
+import cloud.eheaver.domain.utils.retryPolicy
 import org.typelevel.log4cats.Logger
 import squants.market.Money
 
-import scala.concurrent.duration.*
+import scala.concurrent.duration._
 
 final case class Checkout[F[_]: {MonadThrow, Logger, Retry, Background}](
     payments: PaymentsClientAlg[F],
     cart: ShoppingCartAlg[F],
     orders: OrdersAlg[F]
 ) {
-  private def ensureNonEmpty[A](xs: List[A]): F[NonEmptyList[A]] = {
-    MonadThrow[F].fromOption(
-      NonEmptyList.fromList(xs),
-      EmptyCartError
-    )
-  }
-
   def process(userId: UserId, card: Card): F[OrderId] = {
     for {
       c   <- cart.get(userId)
@@ -42,6 +41,13 @@ final case class Checkout[F[_]: {MonadThrow, Logger, Retry, Background}](
       oid <- placeOrder(userId, pid, its, c.total)
       _   <- cart.delete(userId)
     } yield oid
+  }
+
+  private def ensureNonEmpty[A](xs: List[A]): F[NonEmptyList[A]] = {
+    MonadThrow[F].fromOption(
+      NonEmptyList.fromList(xs),
+      EmptyCartError
+    )
   }
 
   private def processPayment(in: Payment): F[PaymentId] = {

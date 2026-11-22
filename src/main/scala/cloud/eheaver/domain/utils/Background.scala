@@ -2,9 +2,9 @@ package cloud.eheaver.domain.utils
 
 import cats.effect.Temporal
 import cats.effect.std.Supervisor
+import cats.syntax.all._
 
 import scala.concurrent.duration.FiniteDuration
-import cats.syntax.all.*
 
 trait Background[F[_]] {
   def schedule[A](
