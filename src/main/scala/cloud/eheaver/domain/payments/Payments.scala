@@ -4,6 +4,7 @@ import cloud.eheaver.domain.users.UserId
 import squants.market.Money
 
 import java.util.UUID
+import scala.util.control.NoStackTrace
 
 opaque type PaymentId = UUID
 
@@ -17,3 +18,5 @@ case class Payment(
 trait PaymentsClientAlg[F[_]] {
   def process(payment: Payment): F[PaymentId]
 }
+
+case class PaymentError(msg: String) extends NoStackTrace

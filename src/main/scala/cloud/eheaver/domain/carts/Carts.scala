@@ -4,6 +4,8 @@ import cloud.eheaver.domain.items.ItemId
 import cloud.eheaver.domain.users.UserId
 import squants.market.Money
 
+import scala.util.control.NoStackTrace
+
 opaque type Quantity = Int
 opaque type Contents = Map[ItemId, Quantity]
 
@@ -21,3 +23,5 @@ trait ShoppingCartAlg[F[_]] {
   def removeItem(userId: UserId, itemId: ItemId): F[Unit]
   def update(userId: UserId, contents: Contents): F[Unit]
 }
+
+case object EmptyCartError extends NoStackTrace
