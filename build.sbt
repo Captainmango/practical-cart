@@ -61,6 +61,8 @@ lazy val root = (project in file(".")).settings(
     "org.typelevel" %% "squants" % "1.8.3",
     // Postgres client
     "org.tpolecat" %% "skunk-core" % "1.0.0",
+    // UUID v7 impl in Java
+    "io.github.robsonkades" % "uuidv7" % "1.3.0",
     // Property based tests
     "org.scalacheck" %% "scalacheck" % "1.20.0" % Test,
     "org.typelevel" %% "munit-cats-effect" % "2.2.1" % Test)
